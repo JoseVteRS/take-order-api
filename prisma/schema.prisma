@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id         String       @id @default(dbgenerated("concat('tnt_', replace((gen_random_uuid())::text, '-'::text, ''::text))"))
+  name       String?
+  plan       Plan?        @default(FREE)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime?    @updatedAt
+  Restaurant Restaurant[]
+  users      User[]
+}
+
+model User {
+  id          String       @id @default(dbgenerated("concat('usr_', replace((gen_random_uuid())::text, '-'::text, ''::text))"))
+  email       String       @unique
+  name        String?
+  password    String?
+  avatar      String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  tenantId    String
+  active      Boolean      @default(false)
+  activeToken String?      @default(uuid())
+  role        Role[]       @default([USER])
+  restaurants Restaurant[]
+  tenant      Tenant       @relation(fields: [tenantId], references: [id])
+}
+
+model Restaurant {
+  id        String    @id @default(dbgenerated("concat('rest_', replace((gen_random_uuid())::text, '-'::text, ''::text))"))
+  name      String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+  userId    String
+  tenantId  String
+  tenant    Tenant    @relation(fields: [tenantId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
+}
+
+enum Role {
+  ADMIN
+  USER
+  BILLING
+  OWNER
+}
+
+enum Plan {
+  PRO_MONTHLY
+  PRO_YEARLY
+  FREE
+}
