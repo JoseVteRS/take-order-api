@@ -70,6 +70,11 @@ export class DishService {
 
     async update(updateData: Prisma.DishUpdateInput, user: User, restaurantId: string, dishId: string) {
         try {
+
+            const isRestaurantOwner = await this.checkRestaurantOwner(user.tenantId, restaurantId)
+            if (!isRestaurantOwner)
+                throw new NotFoundException()
+
             const updatedDish = await this.prisma.dish.update({
                 where: { id: dishId, restaurantId },
                 data: {
@@ -83,8 +88,13 @@ export class DishService {
         }
     }
 
-    async delete(restaurantId: string, dishId: string) {
+    async delete(restaurantId: string, dishId: string, user: User) {
         try {
+
+            const isRestaurantOwner = await this.checkRestaurantOwner(user.tenantId, restaurantId)
+            if (!isRestaurantOwner)
+                throw new NotFoundException()
+
             await this.prisma.dish.delete({
                 where: { id: dishId, restaurantId },
             })
