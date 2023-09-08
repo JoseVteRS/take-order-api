@@ -1,8 +1,9 @@
 // guards/dish-owner.guard.ts
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, NotFoundException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { META_DISH } from '../decorators/dish-owner.decorator';
+import { NotFoundError } from 'rxjs';
 
 
 @Injectable()
@@ -14,10 +15,14 @@ export class DishOwnerGuard implements CanActivate {
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const request = context.switchToHttp().getRequest();
-        const dishId = request.params.dishId; 
+        const dishId = request.params.dishId;
         const restaurantId = request.query.restaurant
-        const restaurantIdParams = request.params.restaurantId;
-    
+
+        console.log({
+            dishId,
+            restaurantId
+        })
+
 
         const isDishRestaurantOwner = this.reflector.get<boolean>(
             META_DISH,
@@ -28,10 +33,17 @@ export class DishOwnerGuard implements CanActivate {
             return true;
         }
 
-       
+
         const dish = await this.prisma.dish.findUnique({
             where: { id: dishId, restaurantId: restaurantId },
         });
-        return !!dish;
+
+        if (!dish) throw new NotFoundException()
+        return true
     }
+
+
+
+
+    
 }

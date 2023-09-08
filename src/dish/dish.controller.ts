@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Post, Query } from "@nestjs/common";
 import { DishService } from "./dish.service";
 import { Prisma, User } from "@prisma/client";
 import { Auth } from "src/auth/decorators/auth.decorator";
@@ -22,7 +22,7 @@ export class DishController {
         @Body() dishData: Prisma.DishCreateInput,
         @GetUser() user: User,
     ) {
-        return this.dishService.create(dishData, user, restaurantId)
+        return await this.dishService.create(dishData, user, restaurantId)
     }
 
 
@@ -31,7 +31,7 @@ export class DishController {
     async findMany(
         @Param('restaurantId') restaurantId: string
     ) {
-        return this.dishService.findMany(restaurantId)
+        return await this.dishService.findMany(restaurantId)
     }
 
     @Auth()
@@ -39,11 +39,23 @@ export class DishController {
     @DishOwner()
     async findById(
         @GetUser() user: User,
-        @Query('restaurant') restaurant: string,
-        @Param('restaurantId') restaurantId: string,
+        @Query('restaurant') restaurantId: string,
+        // @Param('restaurantId') restaurantId: string,
         @Param('dishId') dishId: string,
     ) {
-        return this.dishService.findById(restaurantId, dishId)
+        return await this.dishService.findById(restaurantId, dishId)
+    }
+
+    @Auth()
+    @Delete(':dishId')
+    @DishOwner()
+    async delete(
+        @GetUser() user: User,
+        @Param('dishId') dishId: string,
+        @Query('restaurant') restaurantId: string,
+    ) {
+        console.log(restaurantId)
+        return await this.dishService.delete(restaurantId, dishId, user )
     }
 
 } 

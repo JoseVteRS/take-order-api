@@ -9,25 +9,8 @@ export class DishService {
         private readonly prisma: PrismaService
     ) { }
 
-    private async checkRestaurantOwner(tenantId: string, restaurantId: string) {
-        try {
-            const restaurant = await this.prisma.restaurant.findFirst({
-                where: {
-                    id: restaurantId,
-                    tenantId
-                }
-            })
-            console.log(!!restaurant)
 
-            return !!restaurant
-
-        } catch (error) {
-            throw new InternalServerErrorException()
-        }
-    }
-
-
-    async create(dishData: Prisma.DishCreateInput, user: User, restaurantId: string) {
+    public async create(dishData: Prisma.DishCreateInput, user: User, restaurantId: string) {
         try {
             const isRestaurantOwner = await this.checkRestaurantOwner(user.tenantId, restaurantId)
             if (!isRestaurantOwner)
@@ -46,7 +29,7 @@ export class DishService {
         }
     }
 
-    async findMany(restaurantId: string) {
+    public async findMany(restaurantId: string) {
         try {
             const dishes = await this.prisma.dish.findMany()
             if (!dishes) throw new NotFoundException()
@@ -56,7 +39,7 @@ export class DishService {
         }
     }
 
-    async findById(restaurantId: string, dishId: string) {
+    public async findById(restaurantId: string, dishId: string) {
         try {
             const dish = await this.prisma.dish.findUnique({
                 where: { id: dishId, restaurantId }
@@ -68,7 +51,7 @@ export class DishService {
         }
     }
 
-    async update(updateData: Prisma.DishUpdateInput, user: User, restaurantId: string, dishId: string) {
+    public async update(updateData: Prisma.DishUpdateInput, user: User, restaurantId: string, dishId: string) {
         try {
 
             const isRestaurantOwner = await this.checkRestaurantOwner(user.tenantId, restaurantId)
@@ -88,10 +71,11 @@ export class DishService {
         }
     }
 
-    async delete(restaurantId: string, dishId: string, user: User) {
+    public async delete(restaurantId: string, dishId: string, user: User) {
         try {
 
             const isRestaurantOwner = await this.checkRestaurantOwner(user.tenantId, restaurantId)
+            console.log(isRestaurantOwner)
             if (!isRestaurantOwner)
                 throw new NotFoundException()
 
@@ -99,9 +83,25 @@ export class DishService {
                 where: { id: dishId, restaurantId },
             })
 
+
             return true
         } catch (error) {
             throw new InternalServerErrorException()
         }
     }
+
+    private async checkRestaurantOwner(tenantId: string, restaurantId: string) {
+        try {
+            const restaurant = await this.prisma.restaurant.findFirst({
+                where: {
+                    id: restaurantId,
+                    tenantId
+                }
+            })
+            return !!restaurant
+        } catch (error) {
+            throw new InternalServerErrorException()
+        }
+    }
+
 }
